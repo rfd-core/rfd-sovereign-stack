@@ -1,0 +1,16 @@
+[Unit]
+Description=SEBEK Speech Agent (Vosk ASR)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/rfd-sovereign-stack
+ExecStart=/usr/bin/env python3 /opt/rfd-sovereign-stack/sebek_speech_agent.py --model /opt/vosk-model-small-en-us-0.15 --persist-dir /var/lib/sebek/speech
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

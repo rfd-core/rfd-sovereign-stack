@@ -1,0 +1,10 @@
+# Requirements for the SEBEK speech agent (Vosk + sounddevice + optional TTS)
+
+sounddevice>=0.4.6
+numpy>=1.20
+requests>=2.28
+vosk>=0.3.47
+pyttsx3>=2.90
+
+# Optional (for packaging/playback tools)
+# wave is in stdlib
