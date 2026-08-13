@@ -8,6 +8,9 @@ Multiprocess speech agent for SEBEK using Vosk (offline ASR) and pyttsx3 (TTS).
 - Simulator mode to replay a WAV file for testing
 - Persist audio snippets and produce minimal logs
 
+Enhancements:
+- Includes full Vosk JSON result and word-level timestamps/confidence in the SEBEK payload.
+
 Usage examples:
   python3 sebek_speech_agent.py --model /opt/vosk-model-small-en-us-0.15 --persist-dir /var/lib/sebek/speech
   python3 sebek_speech_agent.py --sim-file examples/test.wav --model /opt/vosk-model-small-en-us-0.15
@@ -95,6 +98,107 @@ def save_wav_from_bytes(path: Path, audio_bytes: bytes, samplerate=SAMPLE_RATE, 
         wf.writeframes(audio_bytes)
 
 
+def recognizer_worker(audio_q: Queue, stop_evt: Event, model_path: str, sebek_url: str, persist_dir: Path, logger=None):
+    if not HAVE_VOSK:
+        raise RuntimeError("vosk is not installed or failed to import")
+
+    if not os.path.exists(model_path):
+        raise RuntimeError(f"Vosk model not found at {model_path}")
+
+    model = Model(model_path)
+    rec = KaldiRecognizer(model, SAMPLE_RATE)
+    rec.SetWords(True)
+
+    bytes_buffer = bytearray()
+
+    while not stop_evt.is_set():
+        try:
+            chunk = audio_q.get(timeout=1.0)
+        except queue.Empty:
+            continue
+
+        # chunk is numpy array int16 -> convert to bytes
+        if isinstance(chunk, bytes):
+            raw = chunk
+        else:
+            raw = chunk.tobytes()
+
+        bytes_buffer.extend(raw)
+
+        if rec.AcceptWaveform(raw):
+            try:
+                result_json = json.loads(rec.Result())
+            except Exception:
+                result_json = {"text": ""}
+            text = result_json.get("text", "").strip()
+            words = result_json.get("result", [])
+            # compute avg confidence if available
+            confs = [w.get("conf") for w in words if isinstance(w.get("conf"), (int, float))]
+            avg_conf = float(sum(confs) / len(confs)) if confs else None
+
+            if text:
+                # persist audio snippet
+                ts = time.strftime("%Y%m%d_%H%M%S")
+                fname = f"speech_{ts}_{uuid.uuid4().hex[:8]}.wav"
+                persist_dir.mkdir(parents=True, exist_ok=True)
+                wav_path = persist_dir / fname
+                try:
+                    save_wav_from_bytes(wav_path, bytes(bytes_buffer))
+                except Exception as e:
+                    if logger:
+                        logger.warning(f"Failed to save wav: {e}")
+
+                payload = {
+                    "type": "speech",
+                    "source": "mic",
+                    "text": text,
+                    "confidence": avg_conf,
+                    "words": words,
+                    "vosk": result_json,
+                    "metadata": {
+                        "audio_path": str(wav_path),
+                        "timestamp": ts
+                    }
+                }
+                post_to_sebek(sebek_url, payload, logger=logger)
+
+            # reset buffer
+            bytes_buffer = bytearray()
+        else:
+            # partial result available (optional)
+            # partial = json.loads(rec.PartialResult()).get("partial","")
+            # handle partials if desired
+            pass
+
+    # on stop, flush final result
+    try:
+        final = json.loads(rec.FinalResult())
+    except Exception:
+        final = {"text": ""}
+    if final.get("text", "").strip():
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        fname = f"speech_final_{ts}_{uuid.uuid4().hex[:8]}.wav"
+        persist_dir.mkdir(parents=True, exist_ok=True)
+        wav_path = persist_dir / fname
+        try:
+            save_wav_from_bytes(wav_path, bytes(bytes_buffer))
+        except Exception:
+            pass
+        payload = {
+            "type": "speech",
+            "source": "mic",
+            "text": final.get("text",""),
+            "confidence": None,
+            "words": final.get("result", []),
+            "vosk": final,
+            "metadata": {"audio_path": str(wav_path), "timestamp": ts}
+        }
+        post_to_sebek(sebek_url, payload, logger=logger)
+
+    if logger:
+        logger.info("Recognizer worker stopping")
+
+
 def recorder_worker(audio_q: Queue, stop_evt: Event, device=None, samplerate=SAMPLE_RATE, blocksize=BLOCKSIZE, logger=None):
     if not HAVE_AUDIO:
         raise RuntimeError("sounddevice is not available on this system")
@@ -116,72 +220,6 @@ def recorder_worker(audio_q: Queue, stop_evt: Event, device=None, samplerate=SAM
         if logger:
             logger.exception(f"Recorder encountered an error: {e}")
         stop_evt.set()
-
-
-def recognizer_worker(audio_q: Queue, stop_evt: Event, model_path: str, sebek_url: str, persist_dir: Path, logger=None):
-    if not HAVE_VOSK:
-        raise RuntimeError("vosk is not installed or failed to import")
-
-    if not os.path.exists(model_path):
-        raise RuntimeError(f"Vosk model not found at {model_path}")
-
-    model = Model(model_path)
-    rec = KaldiRecognizer(model, SAMPLE_RATE)
-    rec.SetWords(True)
-
-    buffer_chunks = []
-    bytes_buffer = bytearray()
-
-    while not stop_evt.is_set():
-        try:
-            chunk = audio_q.get(timeout=1.0)
-        except queue.Empty:
-            continue
-
-        # chunk is numpy array int16 -> convert to bytes
-        if isinstance(chunk, bytes):
-            raw = chunk
-        else:
-            raw = chunk.tobytes()
-
-        bytes_buffer.extend(raw)
-
-        if rec.AcceptWaveform(raw):
-            result_json = json.loads(rec.Result())
-            text = result_json.get("text", "").strip()
-            if text:
-                # persist audio snippet
-                ts = time.strftime("%Y%m%d_%H%M%S")
-                fname = f"speech_{ts}_{uuid.uuid4().hex[:8]}.wav"
-                persist_dir.mkdir(parents=True, exist_ok=True)
-                wav_path = persist_dir / fname
-                try:
-                    save_wav_from_bytes(wav_path, bytes(bytes_buffer))
-                except Exception as e:
-                    if logger:
-                        logger.warning(f"Failed to save wav: {e}")
-
-                payload = {
-                    "type": "speech",
-                    "source": "mic",
-                    "text": text,
-                    "metadata": {
-                        "audio_path": str(wav_path),
-                        "timestamp": ts
-                    }
-                }
-                post_to_sebek(sebek_url, payload, logger=logger)
-
-            # reset buffer
-            bytes_buffer = bytearray()
-        else:
-            # partial result available (optional)
-            # partial = json.loads(rec.PartialResult()).get("partial","")
-            # handle partials if desired
-            pass
-
-    if logger:
-        logger.info("Recognizer worker stopping")
 
 
 def sim_recognize_file(wav_file: Path, model_path: str, sebek_url: str, persist_dir: Path, logger=None):
@@ -206,28 +244,37 @@ def sim_recognize_file(wav_file: Path, model_path: str, sebek_url: str, persist_
         if len(data) == 0:
             break
         if rec.AcceptWaveform(data):
-            res = json.loads(rec.Result())
+            try:
+                res = json.loads(rec.Result())
+            except Exception:
+                res = {"text": ""}
             text = res.get("text", "").strip()
+            words = res.get("result", [])
+            confs = [w.get("conf") for w in words if isinstance(w.get("conf"), (int, float))]
+            avg_conf = float(sum(confs) / len(confs)) if confs else None
             if text:
                 ts = time.strftime("%Y%m%d_%H%M%S")
                 fname = f"sim_speech_{ts}_{uuid.uuid4().hex[:8]}.wav"
                 persist_dir.mkdir(parents=True, exist_ok=True)
                 wav_path = persist_dir / fname
                 try:
-                    # optionally persist the whole sim file once per result
+                    # optionally persist the chunk as a small wav
                     save_wav_from_bytes(wav_path, data)
                 except Exception:
                     pass
-                payload = {"type": "speech", "source": "sim", "text": text, "metadata": {"audio_path": str(wav_path), "timestamp": ts}}
+                payload = {"type": "speech", "source": "sim", "text": text, "confidence": avg_conf, "words": words, "vosk": res, "metadata": {"audio_path": str(wav_path), "timestamp": ts}}
                 post_to_sebek(sebek_url, payload, logger=logger)
         else:
             pass
         time.sleep(0.05)
 
     # final
-    final = json.loads(rec.FinalResult())
+    try:
+        final = json.loads(rec.FinalResult())
+    except Exception:
+        final = {"text": ""}
     if final.get("text", "").strip():
-        payload = {"type": "speech", "source": "sim", "text": final.get("text",""), "metadata": {"audio_path": str(wav_file), "timestamp": time.strftime("%Y%m%d_%H%M%S")}}
+        payload = {"type": "speech", "source": "sim", "text": final.get("text",""), "confidence": None, "words": final.get("result", []), "vosk": final, "metadata": {"audio_path": str(wav_file), "timestamp": time.strftime("%Y%m%d_%H%M%S")}}
         post_to_sebek(sebek_url, payload, logger=logger)
 
     if logger:
