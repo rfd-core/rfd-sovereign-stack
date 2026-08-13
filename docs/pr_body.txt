@@ -1,0 +1,19 @@
+# Pull Request: Add SEBEK Speech Agent (Vosk)
+
+This branch (add/speech-agent-vosk) implements a multiprocess speech agent for SEBEK with the following additions:
+
+- sebek_speech_agent.py: multiprocess recorder + recognizer using sounddevice and Vosk, posts final transcripts to SEBEK, supports simulator mode and optional TTS.
+- requirements-speech.txt: Python dependencies for the speech agent.
+- sebek-speech.service: systemd unit configured to run as a dedicated sebek system user.
+- setup/sebek_setup.sh: automated installer to create user, venv, download models, set permissions, and enable systemd unit.
+- docs/SEBEK_speech_AGENT.md: updated installation and troubleshooting docs.
+
+How to create the PR on GitHub (fastest):
+
+Using GitHub CLI (preferred):
+  gh pr create --base main --head add/speech-agent-vosk --title "Add SEBEK speech agent (Vosk)" --body-file docs/pr_body.txt
+
+Using the web UI:
+  https://github.com/antownwilliams1978-ctrl/rfd-sovereign-stack/compare/main...add/speech-agent-vosk?expand=1
+
+Suggested reviewers: @antownwilliams1978-ctrl
