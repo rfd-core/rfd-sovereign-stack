@@ -52,3 +52,32 @@ for i in range(0, len(chunks), BATCH_SIZE):
     vector_db.add_documents(batch)
 
 print(f"\n✅ MASS DIGESTION COMPLETE. SEBEK has permanently memorized {len(chunks)} data blocks from the Vault.")
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+PS C:\Users\antow> wsl
+antow@SEBEK:/mnt/c/Users/antow$ cd DSOS_WORKSPACE
+antow@SEBEK:/mnt/c/Users/antow/DSOS_WORKSPACE$ git add sebek_dash.py sebek_mass_digest.py
+git commit -m "INIT: SEBEK Neural Engine Core - Tools and Vector Domains"
+git branch -M main
+git push -u origin main
+[sandbox 359eaa0] INIT: SEBEK Neural Engine Core - Tools and Vector Domains
+ 2 files changed, 146 insertions(+)
+ create mode 100644 sebek_dash.py
+ create mode 100644 sebek_mass_digest.py
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 2.94 KiB | 94.00 KiB/s, done.
+Total 4 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+To https://github.com/antownwilliams1978-ctrl/rfd-sovereign-stack.git
+   8b8a79c..359eaa0  main -> main
+warning: branch.main.remote has multiple values
+warning: branch.main.merge has multiple values
+branch 'main' set up to track 'origin/main'.
+antow@SEBEK:/mnt/c/Users/antow/DSOS_WORKSPACE$
+
+
+
+
