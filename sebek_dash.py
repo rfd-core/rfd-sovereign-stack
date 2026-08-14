@@ -1,11 +1,14 @@
+import chromadb
+if hasattr(chromadb.api.client.SharedSystemClient, "clear_system_cache"):
+    chromadb.api.client.SharedSystemClient.clear_system_cache()
 import streamlit as st
 import requests
 import json
 import os
 import subprocess
 try:
-    from langchain_community.embeddings import OllamaEmbeddings
-    from langchain_community.vectorstores import Chroma
+    from langchain_ollama import OllamaEmbeddings
+    from langchain_chroma import Chroma
     HAS_MEMORY = True
 except ImportError:
     HAS_MEMORY = False
