@@ -1,0 +1,1 @@
+Add Vosk word-timestamps and confidence to payload; add integration helper and a containerized real-agent Dockerfile

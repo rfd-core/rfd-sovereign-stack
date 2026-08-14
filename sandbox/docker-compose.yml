@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  sebek-mock:
+    build: ./sebek_mock
+    ports:
+      - "11434:11434"
+    volumes:
+      - sebek-mock-data:/data
+
+  sim-agent:
+    build: ./sim_agent
+    depends_on:
+      - sebek-mock
+    environment:
+      - SEBEK_URL=http://sebek-mock:11434/api/observe
+
+  real-agent-template:
+    build: ./real_agent
+    # NOTE: bind-mount your local Vosk model and persist dir when running this service
+    # volumes:
+    #   - /opt/vosk-model-small-en-us-0.15:/models:ro
+    #   - /var/lib/sebek/speech:/data
+    # devices:
+    #   - /dev/snd:/dev/snd
+    entrypoint: ["/usr/bin/env", "python", "/app/sebek_speech_agent.py", "--model", "/models", "--persist-dir", "/data", "--sebek-url", "http://sebek-mock:11434/api/observe"]
+
+volumes:
+  sebek-mock-data:
