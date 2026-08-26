@@ -1,15 +1,15 @@
 # Two Feather Games & Charity: Complete Platform Architecture
-## Entertainment Gaming + Donation-Driven Prize Model
+## Entertainment Gaming + Sweepstakes Prize Model
 
 ---
 
 ## EXECUTIVE SUMMARY
 
-**Platform Model**: Players donate to nonprofit, receive free social coins, play games, win real prizes.
+**Platform Model**: Players purchase GC, receive minimal SC as gift, play games, win real prizes from SC gameplay only.
 
 - **GC (Gaming Coins)**: Purchased with real money, entertainment-only (no withdrawal)
-- **SC (Social Coins)**: Free, given as gift when donating to Two Feathers Nationals
-- **Prizes**: Real USD/gift cards won by playing with SC
+- **SC (Social Coins)**: Minimal automatic gift when buying GC ($30K GC = 20 SC), must be played through before redemption
+- **Prizes**: Real USD/gift cards won by playing with SC (1:1 ratio for winnings >50 SC)
 - **Charity**: 60% of GC revenue + 100% of partner 70/30 split goes to nonprofit
 
 ---
@@ -22,7 +22,8 @@
 
 **Acquisition**:
 - Purchase: $4.99, $9.99, $24.99, $49.99, $99.99 packs
-- Bonus: First-time player gets 5,000 GC free (promo)
+- Buy $30,000 GC → **Automatically receive 20 SC as a gift** (1:1500 ratio, ~0.067%)
+- First-time player bonus: Buy $4.99 → Get $9.98 GC (2x bonus, no extra SC)
 
 **Usage**:
 - Wager on any game (proprietary or partner)
@@ -37,52 +38,86 @@
 
 **Legal Stance**: "Entertainment chips — like a Vegas slot machine. Fun, but not real money."
 
+**Conversion Rate (GC to SC Gift)**:
+```
+$4.99 GC → 0 SC (rounding: <1 SC)
+$9.99 GC → 0 SC (rounding: <1 SC)
+$24.99 GC → 0 SC (rounding: ~0.017 SC)
+$49.99 GC → 0 SC (rounding: ~0.033 SC)
+$99.99 GC → 0 SC (rounding: ~0.067 SC, rounds to 0)
+$300 GC → 0 SC (rounds to 0)
+$30,000 GC → 20 SC (triggers first SC gift)
+```
+
 ---
 
 ### 1.2 Social Coins (SC)
 
-**Purpose**: Prize-earning currency
+**Purpose**: Prize-earning currency via gameplay only
 
 **Acquisition**:
-- **Primary**: Donation to Two Feathers Nationals
-  - Donate $10 USD → Receive 10,000 SC (1:1 ratio, user-friendly)
-  - Tax-deductible receipt issued by nonprofit
-- **Secondary**: Occasional bonuses or promos (rare)
-  
+- **Primary**: Automatic gift when purchasing GC (1:1500 ratio)
+  - $30,000 GC purchase → 20 SC gift
+  - $150,000 GC purchase → 100 SC gift
+- **Secondary**: Won through gameplay only
+  - Win $50+ SC in games = eligible for redemption
+- **Tertiary**: Rare event bonuses (after play-through req met)
+
+**Play-Through Requirement** (MUST be completed before prize redemption):
+- All gifted SC **must be wagered in games** before any redemption is allowed
+- System tracks: "Gift SC Status" (Pending Play-Through | Completed | Redeemable)
+- Player cannot redeem prizes until gift SC is spent/wagered
+- Example: Receive 20 SC gift → Play games with 20 SC → Once wagered/spent → Now eligible for prize redemption
+
 **Usage**:
 - Wager on any game (proprietary or partner)
-- **Wins are real**: SC winnings convert to actual USD/gift cards
-- No expiration (permanent gift)
+- **Wins are real**: SC winnings (>50 SC) convert to actual USD/gift cards at 1:1 ratio
+- No expiration (permanent gift once play-through complete)
 - Can re-wager winnings
 
 **Mechanics**:
-- Win $25 SC → Redeem for $25 Starbucks card or PayPal
-- Win $5 SC → Keep playing or cash out
-- Can donate SC back to nonprofit (meta engagement)
+- Gift SC: Must be played through before redemption eligibility
+- Winnings (>50 SC): Redeem for $1:1 USD value
+- Winnings (<50 SC): Can only re-play, not redeem
 
-**Legal Stance**: "Free gift from nonprofit. Wins are real prizes earned through entertainment."
+**Legal Stance**: "Minimal free gift with GC purchase. Gift must be played through. Wins are real prizes earned through entertainment."
 
 ---
 
-### 1.3 Prizes
+### 1.3 Prize Redemption Rules
 
-**Available Redemptions**:
-- USD via PayPal (minimum $5)
-- Gift cards: Starbucks, Amazon, Best Buy, etc. ($5-$100)
+**Redemption Eligibility**:
+1. ✅ Play-through requirement completed (gift SC wagered)
+2. ✅ SC winnings from gameplay **above 50 SC threshold**
+3. ✅ Player verified (ID for redemptions >$600/year)
+
+**Available Redemptions** (1:1 SC to USD):
+- USD via PayPal (minimum $50, equal to $50 SC)
+- Gift cards: Starbucks, Amazon, Best Buy, DoorDash, etc. ($50-$1,000)
 - Prepaid debit cards (via partner processor)
 - Donate back to nonprofit (generates tax receipt)
+
+**Redemption Tiers**:
+```
+SC Winnings → Prize Redemption (1:1 Ratio)
+0-50 SC win   → Cannot redeem (play-only)
+51-200 SC     → Redeem as $51-200 (verification not required)
+201-600 SC    → Redeem as $201-600 (light ID check)
+601+ SC       → Redeem as $601+ (full ID verification required, 1099 issued)
+```
 
 **Prize Pool Funding**:
 - 40% of GC revenue reserved for prize redemption
 - Example: $10,000 GC revenue/month → $4,000 prize pool
-- Ensures sustainability without "house always loses"
+- Ensures sustainability (SC winnings come from house edge)
 
 **Redemption Process**:
-1. Player clicks "Redeem Prize"
-2. Selects prize type and amount
-3. Completes verification (ID + address for >$100 redemptions)
-4. Prize delivered within 3-5 business days
-5. Tax receipt auto-generated (1099-MISC for >$600/year)
+1. Player accumulates >50 SC from wins
+2. Clicks "Redeem Prize"
+3. Selects prize type and amount
+4. Completes verification (if applicable)
+5. Prize delivered within 3-5 business days
+6. Tax receipt auto-generated (1099-MISC for >$600/year)
 
 ---
 
@@ -126,7 +161,7 @@
 
 **Table/Card Games (4 games)**
 - **Blackjack**: `FeatherBlackjack` (single hand), `CouncilCards` (multi-hand)
-- **Poker**: `SacredPoker` ( 5-card draw), `FeatherHand` (video poker, Jacks or better)
+- **Poker**: `SacredPoker` (5-card draw), `FeatherHand` (video poker, Jacks or better)
 
 ---
 
@@ -163,23 +198,30 @@
 ### 2.2 Game Mechanics & Compliance
 
 **All games enforce**:
+- ✅ Track SC separately: Gift SC (must play-through) vs Won SC (redeemable)
 - ✅ No cash references ("earn," "win," "collect" only)
 - ✅ No payout promises (language: "potential prize," "if lucky")
 - ✅ No "real money" language (use "social coins," "donations")
-- ✅ No gambling disclaimers (this isn't gambling legally)
 - ✅ All outcomes must be clear (RNG seed logged for disputes)
 - ✅ House edge transparent: "Average return 92% (GC), 94% (SC)"
+- ✅ Display: "Prize redemption available for winnings >50 SC"
 
 **House Edge Model**:
 - **GC games**: 8% average house edge (entertainment)
-- **SC games**: 6% average house edge (incentive to donate)
+- **SC games**: 6% average house edge (incentive to play minimal gift)
 - Difference funds prize pool + nonprofit operations
+
+**Play-Through Tracking**:
+- System logs: All gift SC must be "wagered" in games
+- Wager = any spin/hand played with gift SC
+- Once wager total ≥ gift SC amount → Play-through complete
+- Automatic unlock: "Now eligible for prize redemption"
 
 ---
 
 ## SECTION 3: REVENUE MODEL
 
-### 3.1 GC Revenue Stream
+### 3.1 GC Purchase Revenue Stream
 
 **Monthly GC Sales (Projection)**:
 - $100 avg player × 1,000 active players = $100,000/month
@@ -187,9 +229,9 @@
 **GC Revenue Distribution**:
 
 ```
-GC Revenue: $100,000/month
+GC Purchase Revenue: $100,000/month
 ├─ Prize Pool (40%): $40,000
-│  └─ Funded prizes, gift cards, PayPal withdrawals
+│  └─ Funded by house edge (SC winnings >50, redeemed 1:1)
 ├─ Two Feathers Nationals (50%): $50,000
 │  └─ Nonprofit operations, programs, board decisions
 ├─ Platform Ops (10%): $10,000
@@ -197,8 +239,10 @@ GC Revenue: $100,000/month
 ```
 
 **Explanation**:
-- Prize pool is NOT "money lost to players" — it's GC that users won
-- Charity gets largest cut because this is the core mission
+- Players pay $100K for GC (entertainment, not returnable)
+- Players receive $67 SC (at 1:1500 ratio for $100K in GC) — minimal gift
+- Prize pool ($40K) comes from house edge on SC games
+- Charity gets 50% of GC revenue (core mission funding)
 - Ops costs are minimal (headless architecture on Vultr)
 
 ---
@@ -219,29 +263,24 @@ Partner Game Revenue: $30,000/month
 
 ---
 
-### 3.3 Donation & SC Revenue
+### 3.3 Donation Revenue (Optional, Separate)
 
 **Donation Processing**:
 - Average donation: $25 USD
 - Platform fee: 2.2% + $0.30 (via Stripe)
 - Nonprofit receives: $24.46 per $25 donation
-
-**SC as Engagement Driver**:
-- $25 donation → 25,000 SC
-- Player plays more (SC has longer engagement tail than GC)
-- Player wins more SC → redeems prizes → more platform engagement
-- More engagement → higher LTV → more GC purchases
+- Donor receives: SC bonus (optional) + tax-deductible receipt
 
 **Projected Donation Volume**:
-- 10% of active players donate monthly
-- 1,000 players × 10% = 100 donations/month
-- 100 × $25 avg = $2,500/month gross
-- 100 × $24.46 net = $2,446/month to nonprofit
+- 5-10% of active players donate monthly (conservative)
+- 1,000 players × 7.5% = 75 donations/month
+- 75 × $25 avg = $1,875/month gross
+- 75 × $24.46 net = $1,835/month to nonprofit
 
 **Total monthly charity revenue**:
 - GC-based: $71,000
-- Donations: $2,446
-- **Total: $73,446/month**
+- Donations: $1,835
+- **Total: $72,835/month**
 
 ---
 
@@ -255,20 +294,25 @@ Partner Game Revenue: $30,000/month
 
 | Element | Traditional Gambling | RFD Model |
 |---------|---|---|
-| **Payment** | Wager (money at risk) | Donation (gift, no risk) |
-| **Play** | Using wagered money | Using free gifted currency |
-| **Outcome** | Win = cash payout | Win = prize from separate pool |
-| **Consideration** | Player pays to play | No payment for play |
-| **Real Value** | Entire bet at risk | SC is free, no real value risked |
+| **GC Purchase** | Wager (money at risk) | Purchase for entertainment (no refund) |
+| **SC Acquisition** | N/A | Negligible gift (1:1500 ratio, ~$0.067 per $100 spent) |
+| **Play with GC** | Using wagered money | Using purchased entertainment currency |
+| **Play with SC** | N/A | Using free minimal gift (must play-through first) |
+| **Outcome** | Win = cash payout from wager | Win = prize from separate pool (only >50 SC) |
+| **Consideration** | Player pays to play | No payment for SC play (it's a gift) |
+| **Real Value Risk** | Entire bet at risk | SC gift has no cash value; plays through before redemption |
 
 **Legal Theory**: This is a **sweepstakes**, not gambling:
-- Entry is free (SC is a gift)
+- Entry with SC is free (it's a minimal gift)
+- Entry requires play-through (gift must be wagered)
 - Outcome is random (RNG-based)
-- Prizes are real (funded separately)
-- No consideration of payment for entry
+- Prizes are real (funded separately, only for winners >50 SC)
+- No consideration of payment for SC entry
 
 **Key Regulatory Quote** (FTC):
 > "Sweepstakes require no consideration for entry and random chance determines winners."
+
+**SC Play Defense**: "Players receive negligible SC (~0.067 per $100 GC) as a free gift. Before any prize redemption is allowed, this gift must be played through in games. Only winners accumulating >50 SC can redeem prizes. This is a classic sweepstakes: free entry, random outcome, real prizes."
 
 ---
 
@@ -285,10 +329,12 @@ Partner Game Revenue: $30,000/month
 - ✅ Platform (Two Feather Games LLC) separate from nonprofit
 - ✅ No donation language inside games
 - ✅ No game outcomes tied to donation matching
-- ✅ Prize pool funded from GC revenue (traceable ledger)
+- ✅ Prize pool funded from GC revenue/house edge (traceable ledger)
+- ✅ SC tracked separately: Gift (play-through) vs Won (redeemable)
 
 **Prize System**:
 - ✅ Prize payouts from dedicated fund, not player deposits
+- ✅ Prize redemption only for SC winnings >50
 - ✅ 1099 issued for prizes >$600/year
 - ✅ Prize policy published (RTG — Return to Player)
 - ✅ Appeals process for disputed outcomes
@@ -309,6 +355,7 @@ Partner Game Revenue: $30,000/month
 - Obtain legal review in target states before public launch
 - Implement geofencing for restricted states
 - Have 501(c)(3) approval letter from IRS as defense
+- Document that SC is negligible and requires play-through before redemption
 
 ---
 
@@ -317,14 +364,16 @@ Partner Game Revenue: $30,000/month
 ### Phase 1: Foundation (Weeks 1-4)
 - [ ] Build core slot engine framework (reusable codebase)
 - [ ] Implement RNG + fairness auditing
-- [ ] Create Stripe + Plaid integration for GC purchases
-- [ ] Build SC wallet system (blockchain OR traditional ledger)
+- [ ] Create Stripe integration for GC purchases
+- [ ] **Build dual SC wallet system** (Gift SC + Won SC tracking)
+- [ ] **Implement play-through tracking** (gift SC must be wagered)
 - [ ] Create user authentication + KYC for >$600 prizes
 
 **Deliverables**:
 - Working slot engine running locally
 - Payment processor integration
-- User account system with wallet display
+- Dual SC wallet with play-through requirement
+- User account system with wallet displays
 
 ---
 
@@ -333,7 +382,7 @@ Partner Game Revenue: $30,000/month
 - [ ] Deploy 8 instant-win games
 - [ ] Deploy 4 table/card games
 - [ ] Create game library UI (category filters, search)
-- [ ] Implement prize redemption system
+- [ ] **Implement SC redemption system** (>50 SC threshold)
 
 **Deliverables**:
 - 30 playable games in private beta
@@ -346,13 +395,13 @@ Partner Game Revenue: $30,000/month
 - [ ] Set up Two Feathers Nationals nonprofit entity (Inc + EIN)
 - [ ] Open nonprofit bank account
 - [ ] Integrate donation processor (Stripe Nonprofit)
-- [ ] Build donation UI + SC gifting automation
+- [ ] Build donation UI (separate from SC gifting)
 - [ ] Create Impact Center (nonprofit mission display)
 
 **Deliverables**:
-- Donation button working
-- Automatic SC credit upon donation
+- Donation button working (optional, separate)
 - Nonprofit transparency page
+- SC gifting working automatically on all GC purchases
 
 ---
 
@@ -389,7 +438,9 @@ Partner Game Revenue: $30,000/month
 | Aspect | High5 Casino | Crown Coin | **Two Feather Games** |
 |--------|---|---|---|
 | **Games** | 100+ (generic) | 80+ (generic) | 50 (curated, cultural) |
-| **Currency Model** | VIP tier (whales) | Whale focus | 3-tier (GC/SC/Prizes) |
+| **Currency Model** | VIP tier (whales) | Whale focus | 2-tier (GC/SC) |
+| **SC Gift Model** | None | None | **Minimal gift + play-through** |
+| **Prize Threshold** | All wins | Limited | >50 SC only |
 | **Charity** | None | None | 60%+ revenue |
 | **Prize Model** | No real prizes | Limited | Real USD/gift cards |
 | **Donation Incentive** | None | None | Free SC + tax deduction |
@@ -404,9 +455,11 @@ Partner Game Revenue: $30,000/month
 
 **Risk**: State considers SC play "gambling"
 **Mitigation**: 
-- Keep donation separate from play (different screens)
-- Use language: "You received free gift currency, not purchased it"
-- Have nonprofit issue receipts, not platform
+- Keep SC gifting completely separate from purchase confirmation
+- Use language: "You received a negligible free gift currency, not purchased it"
+- Document that SC gift must be played through before any redemption
+- Document that only winners >50 SC can redeem (rest play-only)
+- Have nonprofit issue receipts for donations, platform for GC purchases
 - Obtain legal opinion in target states
 
 **Risk**: IRS challenges 501(c)(3) nonprofit status
@@ -424,15 +477,15 @@ Partner Game Revenue: $30,000/month
 **Mitigation**:
 - Set house edge conservatively (8-10%)
 - Monitor RTG (Return to Player) monthly
-- Cap daily prize redemptions if needed
+- Only award prizes from house edge (not from player deposits)
 - Maintain 3-month reserve fund
 
-**Risk**: Players abuse referral loops (donate, get SC, cash out)
+**Risk**: Players game the play-through system
 **Mitigation**:
-- Verify donation is real (Stripe confirmed)
-- Cap SC earnings per player per month
-- Implement play-through requirement (SC must be used 2x before withdrawal)
-- Monitor for anomalies
+- Track all wagers with gift SC (system immutable log)
+- Cannot redeem until play-through complete (system enforced)
+- Cannot accumulate gift SC repeatedly (one-time per purchase)
+- Monitor for multi-accounting abuse
 
 ---
 
@@ -450,7 +503,7 @@ Partner Game Revenue: $30,000/month
 ## SECTION 8: NEXT ACTIONS
 
 **Immediate** (This Week):
-- [ ] Consult gaming attorney re: sweepstakes vs gambling classification
+- [ ] Consult gaming attorney re: sweepstakes classification (emphasize play-through + high threshold)
 - [ ] File nonprofit articles of incorporation for Two Feathers Nationals
 - [ ] Set up Stripe Nonprofit account for donation processing
 - [ ] Create detailed game specification for Slot Engine A
@@ -458,13 +511,14 @@ Partner Game Revenue: $30,000/month
 **Short-term** (Next 2 weeks):
 - [ ] Build core slot engine framework (code)
 - [ ] Create user authentication system
-- [ ] Integrate Stripe for GC purchases
+- [ ] Integrate Stripe for GC purchases + **SC gifting (1:1500 ratio)**
+- [ ] **Build play-through tracking system**
 - [ ] Begin development on 6 Slot Engine A games
 
 **Medium-term** (Weeks 3-4):
-- [ ] Integrate donation processor
-- [ ] Build SC wallet system
-- [ ] Create prize redemption workflow
+- [ ] Integrate donation processor (separate from SC gifting)
+- [ ] Build dual wallet system (Gift SC | Won SC)
+- [ ] **Create 50 SC redemption threshold logic**
 - [ ] Deploy first 6 games to private beta
 
 ---
@@ -472,26 +526,36 @@ Partner Game Revenue: $30,000/month
 ## APPENDIX: Currency Conversion Chart
 
 ```
-Real Money → GC (No Prize Conversion)
-$4.99 → 5,000 GC (no withdrawal value)
-$9.99 → 10,500 GC (no withdrawal value)
-$24.99 → 27,500 GC (no withdrawal value)
-$49.99 → 55,000 GC (no withdrawal value)
-$99.99 → 110,000 GC (no withdrawal value)
+Real Money → GC Purchase (No Prize Conversion on GC)
+$4.99 GC → 0 SC (gift rounds to 0)
+$9.99 GC → 0 SC (gift rounds to 0)
+$24.99 GC → 0 SC (gift rounds to 0)
+$49.99 GC → 0 SC (gift rounds to 0)
+$99.99 GC → 0 SC (gift rounds to 0)
+$300 GC → 0 SC (gift rounds to 0)
+$30,000 GC → 20 SC gift (1:1500 ratio)
+$150,000 GC → 100 SC gift (1:1500 ratio)
 
-Real Money → SC (Prize Conversion Allowed)
-$10 Donation → 10,000 SC (withdraw as prizes at 1:1 ratio)
-$25 Donation → 25,000 SC (withdraw as prizes at 1:1 ratio)
-$50 Donation → 50,000 SC (withdraw as prizes at 1:1 ratio)
-$100 Donation → 100,000 SC (withdraw as prizes at 1:1 ratio)
+Optional Real Money → SC (Donation Route)
+$10 Donation → 10,000 SC bonus (gift) + tax receipt
+$25 Donation → 25,000 SC bonus (gift) + tax receipt
+$50 Donation → 50,000 SC bonus (gift) + tax receipt
+$100 Donation → 100,000 SC bonus (gift) + tax receipt
 
-SC Winnings → Prizes (Real USD)
-1,000 SC win → $5 Starbucks card / PayPal
-5,000 SC win → $25 Amazon card / PayPal
-10,000 SC win → $50 PrepaidCard / PayPal
-50,000 SC win → $250 PayPal (requires ID verification)
+SC Gameplay → Prize Redemption (1:1 Ratio, >50 SC Only)
+Winnings 0-50 SC   → Cannot redeem (play-only)
+Winnings 51-200 SC → Redeem as $51-200 prize
+Winnings 201+ SC   → Redeem as $201+ prize (ID verification required)
+
+Example Player Journey:
+1. Buy $30,000 GC → Receive 20 SC gift
+2. Play games with 20 SC gift (must wager all first)
+3. Win 150 SC from gameplay (now have 150 SC eligible)
+4. Play-through complete: Gift SC exhausted
+5. Redeem 100 SC as $100 PayPal (>50 threshold met)
+6. Can keep playing with remaining 50 SC (sub-threshold, play-only)
 ```
 
 ---
 
-**This model is sustainable, legal, and charity-centric. Let's build it.**
+**This model is sustainable, legally defensible, and charity-centric. Let's build it.**
