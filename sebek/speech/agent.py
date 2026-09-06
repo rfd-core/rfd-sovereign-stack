@@ -11,12 +11,11 @@ Systemd service unit available in repo: sebek-speech.service
 
 import argparse
 import json
-import logging
-import os
 import queue
 import sys
 import time
 import uuid
+import wave
 from multiprocessing import Event, Process, Queue
 from pathlib import Path
 from typing import Optional
@@ -43,7 +42,6 @@ BLOCKSIZE = Config.speech.blocksize
 # Try to import audio capture
 try:
     import sounddevice as sd
-    import numpy as np
     HAS_AUDIO = True
 except ImportError:
     HAS_AUDIO = False
@@ -54,6 +52,7 @@ def post_result_to_sebek(
     url: Optional[str] = None,
     max_retries: int = 3,
     backoff: float = 1.0,
+    source: str = "mic",
 ) -> Optional[requests.Response]:
     """Post speech recognition result to SEBEK API.
 
@@ -62,6 +61,7 @@ def post_result_to_sebek(
         url: SEBEK API endpoint. Uses config default if None.
         max_retries: Number of retry attempts.
         backoff: Backoff multiplier between retries (seconds).
+        source: Observation source label (e.g., "mic", "sim").
 
     Returns:
         requests.Response: API response, or None if all retries failed.
@@ -71,7 +71,7 @@ def post_result_to_sebek(
 
     payload = {
         "type": "speech",
-        "source": "mic",
+        "source": source,
         "text": result.text,
         "confidence": result.confidence,
         "words": result.words,
@@ -221,6 +221,106 @@ def recognizer_worker(
         stop_event.set()
 
 
+def sim_recognize_file(
+    wav_file: Path,
+    model_path: Path,
+    sebek_url: Optional[str] = None,
+    persist_dir: Optional[Path] = None,
+) -> int:
+    """Run speech recognition by replaying a WAV file."""
+    sebek_url = sebek_url or Config.ollama.api_observe_endpoint
+    persist_dir = persist_dir or Config.speech.persist_dir
+
+    if not wav_file.exists():
+        logger.error(f"Simulator file not found: {wav_file}")
+        return 1
+
+    try:
+        recognizer = VoskRecognizer(model_path)
+        bytes_buffer = bytearray()
+
+        with wave.open(str(wav_file), "rb") as wf:
+            if wf.getnchannels() != CHANNELS or wf.getframerate() != SAMPLE_RATE:
+                logger.warning(
+                    "Simulator WAV format differs from configured sample rate/channels"
+                )
+
+            while True:
+                chunk = wf.readframes(4000)
+                if not chunk:
+                    break
+
+                bytes_buffer.extend(chunk)
+
+                if recognizer.accept_waveform(chunk):
+                    result = recognizer.get_result()
+                    if result.text:
+                        try:
+                            persist_dir.mkdir(parents=True, exist_ok=True)
+                            audio_file = (
+                                persist_dir
+                                / f"sim_speech_{result.timestamp}_{uuid.uuid4().hex[:8]}.wav"
+                            )
+                            save_audio_to_wav(audio_file, bytes(bytes_buffer))
+                            result.audio_path = audio_file
+                        except Exception as e:
+                            logger.warning(f"Failed to save simulator audio: {e}")
+
+                        post_result_to_sebek(result, sebek_url, source="sim")
+
+                    bytes_buffer = bytearray()
+                    recognizer.reset()
+
+        try:
+            final_result = json.loads(recognizer.recognizer.FinalResult())
+        except Exception:
+            final_result = {"text": ""}
+
+        final_text = final_result.get("text", "").strip()
+        final_words = final_result.get("result", [])
+        if final_text:
+            confidences = [
+                word.get("conf")
+                for word in final_words
+                if isinstance(word.get("conf"), (int, float))
+            ]
+            avg_confidence = (
+                float(sum(confidences) / len(confidences)) if confidences else None
+            )
+            result = SpeechRecognitionResult(
+                text=final_text,
+                confidence=avg_confidence,
+                words=final_words,
+                vosk_result=final_result,
+                timestamp=time.strftime("%Y%m%d_%H%M%S"),
+            )
+            if bytes_buffer:
+                try:
+                    persist_dir.mkdir(parents=True, exist_ok=True)
+                    audio_file = (
+                        persist_dir
+                        / f"sim_speech_final_{result.timestamp}_{uuid.uuid4().hex[:8]}.wav"
+                    )
+                    save_audio_to_wav(audio_file, bytes(bytes_buffer))
+                    result.audio_path = audio_file
+                except Exception as e:
+                    logger.warning(f"Failed to save simulator final audio: {e}")
+            post_result_to_sebek(result, sebek_url, source="sim")
+
+        logger.info("SEBEK speech simulator run complete")
+        return 0
+
+    except SpeechError as e:
+        logger.error(f"Simulator recognition error: {e}")
+        return 1
+    except (wave.Error, OSError) as e:
+        logger.error(f"Invalid simulator WAV file {wav_file}: {e}")
+        return 1
+    except Exception as e:
+        logger.exception(f"Simulator execution failed: {e}")
+        return 1
+
+
 def main() -> int:
     """Main entry point for speech agent.
 
@@ -261,6 +361,12 @@ def main() -> int:
         help="Disable text-to-speech feedback",
     )
     parser.add_argument(
+        "--sim-file",
+        type=Path,
+        default=None,
+        help="Replay WAV file in simulator mode instead of live microphone capture",
+    )
+    parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
@@ -274,15 +380,24 @@ def main() -> int:
 
     try:
         # Validate requirements
-        if not HAS_AUDIO:
-            logger.error("sounddevice not available. Install with: pip install sounddevice")
-            return 1
-
         if not args.model.exists():
             logger.error(
                 f"Vosk model not found at {args.model}. "
                 "Download from https://alphacephei.com/vosk/models"
             )
+            return 1
+
+        if args.sim_file is not None:
+            logger.info(f"Starting SEBEK speech simulator with {args.sim_file}")
+            return sim_recognize_file(
+                wav_file=args.sim_file,
+                model_path=args.model,
+                sebek_url=args.sebek_url,
+                persist_dir=args.persist_dir,
+            )
+
+        if not HAS_AUDIO:
+            logger.error("sounddevice not available. Install with: pip install sounddevice")
             return 1
 
         # Initialize TTS
