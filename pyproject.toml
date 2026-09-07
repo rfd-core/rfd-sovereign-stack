@@ -63,7 +63,10 @@ Repository = "https://github.com/rfd-core/rfd-sovereign-stack.git"
 Issues = "https://github.com/rfd-core/rfd-sovereign-stack/issues"
 
 [tool.setuptools]
-packages = ["sebek"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["sebek", "sebek.*"]
 
 [tool.black]
 line-length = 100

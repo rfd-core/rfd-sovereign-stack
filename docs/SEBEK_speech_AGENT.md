@@ -37,7 +37,7 @@ Quick install (automated):
 
 Simulator mode (replay a WAV file):
    source /opt/sebek-speech-venv/bin/activate
-   python /opt/rfd-sovereign-stack/sebek_speech_agent.py --sim-file /path/to/test.wav --model /opt/vosk-model-small-en-us-0.15
+   python -m sebek.speech.agent --sim-file /path/to/test.wav --model /opt/vosk-model-small-en-us-0.15
 
 Notes & Troubleshooting:
 - The setup script assumes the repository branch add/speech-agent-vosk is cloned to /opt/rfd-sovereign-stack. If you cloned elsewhere, adjust paths accordingly.
